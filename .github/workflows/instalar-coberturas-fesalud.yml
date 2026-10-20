@@ -1,0 +1,28 @@
+name: Instalar coberturas Fesalud
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cotizador/fesalud_coberturas_optimizadas.zip'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  instalar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extraer los cinco PDFs al cotizador
+        run: |
+          unzip -o cotizador/fesalud_coberturas_optimizadas.zip 'cotizador/pdf/*.pdf' -d .
+          test -s cotizador/pdf/primordial.pdf
+          test -s cotizador/pdf/destacado.pdf
+          test -s cotizador/pdf/integral.pdf
+          test -s cotizador/pdf/total.pdf
+          test -s cotizador/pdf/privilegio.pdf
+      - name: Publicar PDFs en GitHub
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cotizador/pdf/*.pdf
+          git diff --cached --quiet || (git commit -m "Install Fesalud coverage PDFs" && git push)
