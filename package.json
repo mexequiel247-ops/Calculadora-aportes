@@ -1,0 +1,1 @@
+{"name": "calculadora-aportes", "version": "1.0.0", "private": true, "scripts": {"build": "node build.cjs", "test": "node tests/receipt.test.cjs && node tests/flow.test.cjs"}, "dependencies": {"tesseract.js": "5.1.1", "tesseract.js-core": "5.1.1", "@tesseract.js-data/spa": "1.0.0"}}
