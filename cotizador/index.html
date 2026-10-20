@@ -73,8 +73,8 @@ const data={"Integral +": {"Individual": [125125.78, 139588.3, 157656.33], "Indi
   let pdf=incluirCobertura?q('pdfArchivo').files[0]:null;
   if(incluirCobertura&&!pdf){
    const nombres={'Primordial +':'primordial.pdf','Destacado +':'destacado.pdf','Integral +':'integral.pdf','Total +':'total.pdf','Privilegio +':'privilegio.pdf','Con Vos':'con-vos.pdf'};
-   const ruta='pdf/'+nombres[plan];
-   try { const respuesta=await fetch(ruta,{cache:'no-store'});if(respuesta.ok&&respuesta.headers.get('content-type')?.includes('pdf')){pdf=new File([await respuesta.blob()],nombres[plan],{type:'application/pdf'});} }catch(e){}
+   const ruta=nombres[plan];
+   try { const respuesta=await fetch(ruta,{cache:'no-store'});if(respuesta.ok){pdf=new File([await respuesta.blob()],nombres[plan],{type:'application/pdf'});} }catch(e){}
   }
   if(incluirCobertura&&!pdf){q('pdfEstado').textContent='Falta seleccionar el PDF de cobertura del plan. Elegilo en el formulario antes de compartir.';alert('Seleccioná el PDF de cobertura del plan para enviar la imagen y el PDF juntos.');return;}
   const files=incluirCobertura?[file,pdf]:[file];
