@@ -29,7 +29,8 @@ const data={"Integral +": {"Individual": [125125.78, 139588.3, 157656.33], "Indi
   c.fillStyle='#0b2db4';c.beginPath();c.roundRect(55,730,890,205,17);c.fill();
   t('TU CUOTA ESTIMADA A PAGAR',85,795,24,'#fff','bold');t(cuota,85,880,66,'#fff','bold');
   t('Cotización sujeta a auditoría médica.',67,985,21,'#768399');
-  t('Valores y aportes sujetos a confirmación por Fesalud.',67,1018,19,'#768399');\n  t('Sin promociones ni adicionales.',67,1051,19,'#768399');
+  t('Valores y aportes sujetos a confirmación por Fesalud.',67,1018,19,'#768399');
+  t('Sin promociones ni adicionales.',67,1051,19,'#768399');
   t('Mathias Nuñez · Asesor Comercial',67,1105,23,'#253f8a','bold');
   t('Consultas: 3482 678274',67,1142,22,'#253f8a');
   // Incorporar la vista de la placa como imagen JPEG dentro de un PDF válido.
@@ -40,20 +41,20 @@ const data={"Integral +": {"Individual": [125125.78, 139588.3, 157656.33], "Indi
   const encoder=new TextEncoder(),parts=[],offsets=[0];let pos=0;
   const add=b=>{parts.push(b);pos+=b.length};
   const txt=t=>add(encoder.encode(t));
-  const obj=(n,body)=>{offsets[n]=pos;txt(n+' 0 obj\\n'+body+'\\nendobj\\n')};
-  txt('%PDF-1.4\\n');
+  const obj=(n,body)=>{offsets[n]=pos;txt(n+' 0 obj\n'+body+'\nendobj\n')};
+  txt('%PDF-1.4\n');
   obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
   obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
   obj(3,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 500 600] /Resources << /XObject << /Im1 4 0 R >> >> /Contents 5 0 R >>');
   offsets[4]=pos;
-  txt('4 0 obj\\n<< /Type /XObject /Subtype /Image /Width 1000 /Height 1200 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+img.length+' >>\\nstream\\n');
-  add(img);txt('\\nendstream\\nendobj\\n');
-  const stream=encoder.encode('q 500 0 0 600 0 0 cm /Im1 Do Q\\n');
+  txt('4 0 obj\n<< /Type /XObject /Subtype /Image /Width 1000 /Height 1200 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+img.length+' >>\nstream\n');
+  add(img);txt('\nendstream\nendobj\n');
+  const stream=encoder.encode('q 500 0 0 600 0 0 cm /Im1 Do Q\n');
   offsets[5]=pos;
-  txt('5 0 obj\\n<< /Length '+stream.length+' >>\\nstream\\n');add(stream);txt('endstream\\nendobj\\n');
-  const xref=pos;txt('xref\\n0 6\\n0000000000 65535 f \\n');
-  for(let n=1;n<=5;n++)txt(String(offsets[n]).padStart(10,'0')+' 00000 n \\n');
-  txt('trailer\\n<< /Size 6 /Root 1 0 R >>\\nstartxref\\n'+xref+'\\n%%EOF');
+  txt('5 0 obj\n<< /Length '+stream.length+' >>\nstream\n');add(stream);txt('endstream\nendobj\n');
+  const xref=pos;txt('xref\n0 6\n0000000000 65535 f \n');
+  for(let n=1;n<=5;n++)txt(String(offsets[n]).padStart(10,'0')+' 00000 n \n');
+  txt('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
   const file=new File(parts,'cotizacion-fesalud.pdf',{type:'application/pdf'});
   let pdf=incluirCobertura?q('pdfArchivo').files[0]:null;
   if(incluirCobertura&&!pdf){
