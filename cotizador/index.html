@@ -11,7 +11,7 @@ let data={"Integral +": {"Individual": [125125.78, 139588.3, 157656.33], "Indivi
  
  
  q('generar').addEventListener('click',()=>{q('filaAportesPlaca').style.display=(Number(q('aporte').value)||0)>0?'flex':'none'});
- async function compartir(incluirCobertura=true){
+ async function compartir(incluirCobertura=true,guardar=false){
   q('generar').click();
   const plan=q('plan').value, categoria=q('cat').value, edad=q('edad').selectedOptions[0].text;
   const aporte=Number(q('aporte').value)||0, precio=q('precio').textContent, cuota=q('cuota').textContent, aportes=q('aportes').textContent;
