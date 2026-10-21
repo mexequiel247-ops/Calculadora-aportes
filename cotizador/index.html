@@ -76,11 +76,17 @@ let data={"Integral +": {"Individual": [125125.78, 139588.3, 157656.33], "Indivi
   if(pdf)addDownload(pdf,pdf.name,'Descargar PDF del plan');
   const copy=document.createElement('button');copy.textContent='Copiar texto para WhatsApp';copy.onclick=()=>navigator.clipboard.writeText(texto).then(()=>alert('Texto copiado')).catch(()=>prompt('Copiá el texto:',texto));links.appendChild(copy);status.after(links);
   status.textContent=pdf||!incluirCobertura?'Si WhatsApp no adjunta los archivos, descargalos desde los botones de abajo y envialos desde WhatsApp.':'No se encontró el PDF de cobertura de este plan. Podés descargar la placa.';
-  // Evitar compartir texto en la misma operación: ciertos Android envían solo el texto.
-  // Probar archivos sin texto; si el navegador no lo permite, conservar descargas visibles.
+  // Android/WhatsApp puede descartar ambos adjuntos y mostrar "mensaje vacío".
+  // No abrir WhatsApp automáticamente en ese caso: ofrecer descargas verificables.
+  const android=/Android/i.test(navigator.userAgent);
+  if(android&&incluirCobertura){
+   status.textContent=pdf?'Android: descargá la placa y el PDF con los dos botones de abajo. Después abrí WhatsApp y adjuntalos desde el chat.':'Android: descargá la placa. No se encontró el PDF de cobertura para este plan.';
+   return;
+  }
   if(navigator.canShare&&navigator.canShare({files})){
-   try{await navigator.share({files,title:'Cotización Fesalud'});return}catch(e){if(e.name==='AbortError')return;status.textContent='No se pudieron adjuntar automáticamente los archivos. Descargalos abajo y envialos desde WhatsApp.'}
-  }else{status.textContent='Este navegador no permite adjuntar estos archivos automáticamente. Descargalos abajo y envialos desde WhatsApp.';}
+   try{await navigator.share({files,title:'Cotización Fesalud'});return}catch(e){if(e.name==='AbortError')return}
+  }
+  status.textContent='Descargá los archivos de abajo y adjuntalos desde WhatsApp.';
  }
  shareButton.addEventListener('click',()=>compartir(true));
  q('compartirCotizacionPdf').addEventListener('click',()=>compartir(false));
