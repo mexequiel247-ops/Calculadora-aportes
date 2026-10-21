@@ -68,10 +68,19 @@ let data={"Integral +": {"Individual": [125125.78, 139588.3, 157656.33], "Indivi
   if(incluirCobertura&&!pdf){q('pdfEstado').textContent='No se encontró el PDF de cobertura. Se compartirá solo la foto de la cotización.';}
   const files=incluirCobertura&&pdf?[file,pdf]:[file];
   const texto=['Fesalud · Plan '+plan,'Fecha de emisión: '+new Date().toLocaleDateString('es-AR'),...(q('cliente').value.trim()?['Cliente: '+q('cliente').value.trim()]:[]),categoria,'Valor del plan: '+precio,...(aporte>0?['Aportes a descontar: '+aportes]:[]),...(q('descuentoTransferencia').checked?['Descuento por transferencia (10% por 3 meses): '+money(descuento)]:[]),'Cuota estimada: '+cuota,'Sujeto a auditoría médica.'].join('\n');
+  // Mostrar siempre descargas de respaldo: Android/WhatsApp puede descartar los adjuntos.
+  const status=q('pdfEstado');const oldLinks=document.getElementById('archivosAlternativos');if(oldLinks)oldLinks.remove();
+  const links=document.createElement('div');links.id='archivosAlternativos';
+  const addDownload=(blob,name,label)=>{const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download=name;a.textContent=label;a.style.cssText='display:block;padding:14px;margin:9px 0;background:#edf3ff;border-radius:10px;color:#123eab;font-weight:bold;text-align:center';links.appendChild(a);};
+  addDownload(imagenBlob,'cotizacion-fesalud.png','Descargar placa (imagen)');
+  if(pdf)addDownload(pdf,pdf.name,'Descargar PDF del plan');
+  const copy=document.createElement('button');copy.textContent='Copiar texto para WhatsApp';copy.onclick=()=>navigator.clipboard.writeText(texto).then(()=>alert('Texto copiado')).catch(()=>prompt('Copiá el texto:',texto));links.appendChild(copy);status.after(links);
+  status.textContent=pdf||!incluirCobertura?'Si WhatsApp no adjunta los archivos, descargalos desde los botones de abajo y envialos desde WhatsApp.':'No se encontró el PDF de cobertura de este plan. Podés descargar la placa.';
+  // Evitar compartir texto en la misma operación: ciertos Android envían solo el texto.
+  // Probar archivos sin texto; si el navegador no lo permite, conservar descargas visibles.
   if(navigator.canShare&&navigator.canShare({files})){
-   try{await navigator.share({files,text:texto,title:'Cotización Fesalud'});return}catch(e){if(e.name==='AbortError')return}
-  }
-  const status=q('pdfEstado');status.textContent='Tu Android no permitió adjuntar ambos archivos automáticamente. Descargá la placa y el PDF y adjuntalos juntos desde WhatsApp.';const oldLinks=document.getElementById('archivosAlternativos');if(oldLinks)oldLinks.remove();const links=document.createElement('div');links.id='archivosAlternativos';const addDownload=(blob,name,label)=>{const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download=name;a.textContent=label;a.style.cssText='display:block;padding:14px;margin:9px 0;background:#edf3ff;border-radius:10px;color:#123eab;font-weight:bold;text-align:center';links.appendChild(a);};addDownload(imagenBlob,'cotizacion-fesalud.png','Descargar placa (imagen)');if(pdf)addDownload(pdf,pdf.name,'Descargar PDF del plan');else if(incluirCobertura)status.textContent+=' El PDF de este plan no está disponible.';const copy=document.createElement('button');copy.textContent='Copiar texto para WhatsApp';copy.onclick=()=>navigator.clipboard.writeText(texto).then(()=>alert('Texto copiado')).catch(()=>prompt('Copiá el texto:',texto));links.appendChild(copy);status.after(links);
+   try{await navigator.share({files,title:'Cotización Fesalud'});return}catch(e){if(e.name==='AbortError')return;status.textContent='No se pudieron adjuntar automáticamente los archivos. Descargalos abajo y envialos desde WhatsApp.'}
+  }else{status.textContent='Este navegador no permite adjuntar estos archivos automáticamente. Descargalos abajo y envialos desde WhatsApp.';}
  }
  shareButton.addEventListener('click',()=>compartir(true));
  q('compartirCotizacionPdf').addEventListener('click',()=>compartir(false));
