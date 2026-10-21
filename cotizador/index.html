@@ -80,7 +80,9 @@ let data={"Integral +": {"Individual": [125125.78, 139588.3, 157656.33], "Indivi
   // No abrir WhatsApp automáticamente en ese caso: ofrecer descargas verificables.
   const android=/Android/i.test(navigator.userAgent);
   if(android&&incluirCobertura){
-   status.textContent=pdf?'Android: descargá la placa y el PDF con los dos botones de abajo. Después abrí WhatsApp y adjuntalos desde el chat.':'Android: descargá la placa. No se encontró el PDF de cobertura para este plan.';
+   status.textContent=pdf?'Android: tocá Descargar placa y Descargar PDF abajo. Después adjuntá ambos desde WhatsApp.':'Android: descargá la placa. No se encontró el PDF del plan.';
+   // En pantallas pequeñas, llevar los botones al área visible inmediatamente.
+   links.scrollIntoView({behavior:'smooth',block:'center'});
    return;
   }
   if(navigator.canShare&&navigator.canShare({files})){
