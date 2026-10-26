@@ -36,3 +36,11 @@ Administrar contactos, oportunidades, cotizaciones y seguimiento comercial. Inte
 - Confirmar base de datos y estrategia de migraciones sin exponer secretos.
 - Identificar cómo el cotizador genera y comparte cotizaciones.
 - Confirmar cuenta Meta Business y disponibilidad de onboarding oficial.
+
+## Decisiones confirmadas
+- Uso exclusivo por un asesor; no construir panel multiusuario.
+- Presupuesto adicional: ARS 0. No activar recursos pagos ni APIs con cargos.
+- WhatsApp Business: apertura manual del chat con texto prellenado; sin lectura ni envío automático de mensajes.
+- Autenticación privada de un usuario, con hash de contraseña y sesiones seguras.
+- Seguimientos dentro del CRM, sin servicio externo de notificaciones.
+- Verificar límites y costos de infraestructura antes de desplegar; no asumir gratuidad de recursos existentes.
