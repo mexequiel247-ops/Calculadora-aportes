@@ -1,0 +1,10 @@
+{
+  "name": "Fesalud CRM Comercial",
+  "short_name": "Fesalud CRM",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#edf2fa",
+  "theme_color": "#092778",
+  "lang": "es-AR",
+  "description": "CRM local gratuito para un asesor comercial"
+}
