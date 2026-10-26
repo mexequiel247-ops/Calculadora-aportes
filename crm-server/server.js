@@ -1,0 +1,25 @@
+'use strict';
+const express=require('express'),helmet=require('helmet'),rateLimit=require('express-rate-limit'),crypto=require('crypto'),{Pool}=require('pg');
+const app=express();app.disable('x-powered-by');app.use(helmet());app.use(express.json({limit:'40kb'}));
+const PORT=process.env.PORT||3000,secret=process.env.CRM_SESSION_SECRET||'',hash=process.env.CRM_PASSWORD_SCRYPT||'',db=process.env.DATABASE_URL||'';
+if(!db||secret.length<32||!/^scrypt:[a-f0-9]{32}:[a-f0-9]{128}$/.test(hash)){console.error('Missing DATABASE_URL, CRM_SESSION_SECRET or CRM_PASSWORD_SCRYPT');process.exit(1)}
+const pool=new Pool({connectionString:db,ssl:process.env.PGSSL==='disable'?false:{rejectUnauthorized:false}});
+const secure=process.env.NODE_ENV==='production';const cookieName='fesalud_crm_session';
+const limiter=rateLimit({windowMs:15*60*1000,limit:12,standardHeaders:'draft-7',legacyHeaders:false});
+const sha=s=>crypto.createHmac('sha256',secret).update(s).digest('hex');
+function cookies(req){return Object.fromEntries((req.headers.cookie||'').split(';').map(s=>s.trim().split('=').slice(0,2)).filter(x=>x.length===2))}
+function authorized(req){const t=cookies(req)[cookieName];if(!t)return false;const [exp,sig]=t.split('.');if(!/^\d+$/.test(exp)||!sig||Number(exp)<Date.now())return false;const expected=sha(exp);return sig.length===expected.length&&crypto.timingSafeEqual(Buffer.from(sig),Buffer.from(expected))}
+function auth(req,res,next){if(!authorized(req))return res.status(401).json({error:'Iniciá sesión'});next()}
+function csrf(req,res,next){if(['GET','HEAD','OPTIONS'].includes(req.method))return next();const origin=req.get('Origin'),host=req.get('Host');if(!origin||new URL(origin).host!==host)return res.status(403).json({error:'Origen no permitido'});next()}
+app.use('/api/crm',csrf);
+app.post('/api/crm/login',limiter,(req,res)=>{const p=req.body?.password;if(typeof p!=='string'||p.length>256)return res.sendStatus(400);const [,salt,expected]=hash.split(':');const actual=crypto.scryptSync(p,Buffer.from(salt,'hex'),64);if(!crypto.timingSafeEqual(actual,Buffer.from(expected,'hex')))return res.status(401).json({error:'Credenciales incorrectas'});const exp=String(Date.now()+8*60*60*1000);res.cookie(cookieName,exp+'.'+sha(exp),{httpOnly:true,secure,sameSite:'strict',path:'/api/crm',maxAge:8*60*60*1000});res.json({ok:true})});
+app.post('/api/crm/logout',auth,(req,res)=>{res.clearCookie(cookieName,{path:'/api/crm',sameSite:'strict',secure});res.json({ok:true})});
+app.get('/api/crm/session',(req,res)=>res.json({authenticated:authorized(req)}));
+const stages=['Nuevo','Interesado','Cotizado','Seguimiento','Afiliado','No interesado'];
+function valid(x){if(!x||typeof x!=='object'||typeof x.first!=='string'||!x.first.trim()||x.first.length>90||typeof x.last!=='string'||x.last.length>90||typeof x.phone!=='string'||!/^\+?[0-9]{8,16}$/.test(x.phone)||!stages.includes(x.stage)||typeof x.notes!=='string'||x.notes.length>1500)return false;if(x.age!==null&&x.age!==undefined&&(!Number.isInteger(x.age)||x.age<0||x.age>110))return false;if(x.follow!==null&&x.follow!==undefined&&!/^\d{4}-\d{2}-\d{2}$/.test(x.follow))return false;return true}
+app.get('/api/crm/contacts',auth,async(req,res,next)=>{try{const r=await pool.query('SELECT id,first_name AS first,last_name AS last,phone,age,stage,follow_up AS follow,notes,created_at FROM crm_contacts ORDER BY created_at DESC LIMIT 5000');res.set('Cache-Control','no-store');res.json(r.rows)}catch(e){next(e)}});
+app.post('/api/crm/contacts',auth,async(req,res,next)=>{try{const x=req.body;if(!valid(x))return res.sendStatus(400);const r=await pool.query('INSERT INTO crm_contacts(first_name,last_name,phone,age,stage,follow_up,notes) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id',[x.first.trim(),x.last.trim(),x.phone,x.age??null,x.stage,x.follow||null,x.notes]);res.status(201).json(r.rows[0])}catch(e){if(e.code==='23505')return res.status(409).json({error:'Teléfono duplicado'});next(e)}});
+app.put('/api/crm/contacts/:id',auth,async(req,res,next)=>{try{const x=req.body;if(!/^[0-9a-f-]{36}$/.test(req.params.id)||!valid(x))return res.sendStatus(400);const r=await pool.query('UPDATE crm_contacts SET first_name=$1,last_name=$2,phone=$3,age=$4,stage=$5,follow_up=$6,notes=$7,updated_at=now() WHERE id=$8 RETURNING id',[x.first.trim(),x.last.trim(),x.phone,x.age??null,x.stage,x.follow||null,x.notes,req.params.id]);if(!r.rowCount)return res.sendStatus(404);res.json(r.rows[0])}catch(e){if(e.code==='23505')return res.status(409).json({error:'Teléfono duplicado'});next(e)}});
+app.delete('/api/crm/contacts/:id',auth,async(req,res,next)=>{try{if(!/^[0-9a-f-]{36}$/.test(req.params.id))return res.sendStatus(400);await pool.query('DELETE FROM crm_contacts WHERE id=$1',[req.params.id]);res.json({ok:true})}catch(e){next(e)}});
+app.get('/health',(req,res)=>res.json({ok:true}));app.use((err,req,res,next)=>{console.error(err.code||err.message);res.status(500).json({error:'Error interno'})});
+app.listen(PORT,'0.0.0.0',()=>console.log('CRM API listening'));
